@@ -1,0 +1,5 @@
+*.py text eol=lf
+
+alembic/env.py text eol=lf
+alembic/script.py.mako text eol=lf
+alembic/versions/*.py text eol=lf
