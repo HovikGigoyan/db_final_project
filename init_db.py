@@ -47,8 +47,36 @@ CREATE TABLE IF NOT EXISTS Performances (
 );
 """
 
+def terminate_connections():
+    """Terminate all active connections to the database."""
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user=DB_USER,
+        password=DB_PASSWORD,
+        host=DB_HOST,
+        port=DB_PORT
+    )
+    conn.autocommit = True
+    cur = conn.cursor()
+    try:
+        cur.execute(f"""
+            SELECT pg_terminate_backend(pg_stat_activity.pid)
+            FROM pg_stat_activity
+            WHERE pg_stat_activity.datname = '{DB_NAME}'
+              AND pid <> pg_backend_pid();
+        """)
+        logging.info(f"Terminated active connections to database '{DB_NAME}'.")
+    except psycopg2.Error as e:
+        logging.error(f"Error terminating connections: {e}")
+        raise
+    finally:
+        cur.close()
+        conn.close()
+
 def init_db():
     try:
+        terminate_connections()
+
         conn = psycopg2.connect(
             dbname="postgres",
             user=DB_USER,
