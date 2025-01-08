@@ -12,11 +12,11 @@ NUM_PERFORMANCES = 10
 def populate_festivals(num_festivals):
     for _ in range(num_festivals):
         festival = {
-            "name": faker.word().capitalize() + " Festival",
-            "location": faker.city(),
-            "date": faker.date_this_decade().isoformat(),
-            "organizer": faker.company(),
-            "format": random.choice(["Outdoor", "Indoor"])
+            "Name": faker.word().capitalize() + " Festival",
+            "Location": faker.city(),
+            "Date": faker.date_this_decade().isoformat(),
+            "Organizer": faker.company(),
+            "Format": random.choice(["Outdoor", "Indoor"])
         }
         response = requests.post(f"{BASE_URL}/festivals/", json=festival)
         if response.status_code == 200:
@@ -28,11 +28,11 @@ def populate_festivals(num_festivals):
 def populate_rockbands(num_rockbands):
     for _ in range(num_rockbands):
         rockband = {
-            "name": faker.word().capitalize() + " Band",
-            "year_founded": random.randint(1970, 2025),
-            "genre": random.choice(["Rock", "Metal", "Jazz", "Pop"]),
-            "producer": faker.name(),
-            "members": ", ".join(faker.first_name() for _ in range(random.randint(3, 6)))
+            "Name": faker.word().capitalize() + " Band",
+            "YearFounded": random.randint(1970, 2025),
+            "Genre": random.choice(["Rock", "Metal", "Jazz", "Pop"]),
+            "Producer": faker.name(),
+            "Members": ", ".join(faker.first_name() for _ in range(random.randint(3, 6)))
         }
         response = requests.post(f"{BASE_URL}/rockbands/", json=rockband)
         if response.status_code == 200:
@@ -43,11 +43,11 @@ def populate_rockbands(num_rockbands):
 def populate_performances(num_performances):
     for _ in range(num_performances):
         performance = {
-            "festival_id": random.randint(1, NUM_FESTIVALS),
-            "band_id": random.randint(1, NUM_ROCKBANDS),
-            "performance_type": random.choice(["Main Stage", "Side Stage", "Acoustic"]),
-            "number": random.randint(1, 10),
-            "duration": round(random.uniform(30, 180), 2)
+            "FestivalID": random.randint(1, NUM_FESTIVALS),
+            "BandID": random.randint(1, NUM_ROCKBANDS),
+            "PerformanceType": random.choice(["Main Stage", "Side Stage", "Acoustic"]),
+            "Number": random.randint(1, 10),
+            "Duration": round(random.uniform(30, 180), 2)
         }
         response = requests.post(f"{BASE_URL}/performances/", json=performance)
         if response.status_code == 200:

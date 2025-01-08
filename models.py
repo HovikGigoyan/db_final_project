@@ -3,38 +3,38 @@ from sqlalchemy.orm import relationship
 from database import Base
 
 class Festival(Base):
-    __tablename__ = "festivals"
+    __tablename__ = "Festivals"
     
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
-    location = Column(String(100), nullable=False)
-    date = Column(Date, nullable=False)
-    organizer = Column(String(100), nullable=True)
-    format = Column(String(50), nullable=True)
+    FestivalID = Column(Integer, primary_key=True, index=True)
+    Name = Column(String(100), nullable=False)
+    Location = Column(String(100), nullable=False)
+    Date = Column(Date, nullable=False)
+    Organizer = Column(String(100), nullable=True)
+    Format = Column(String(50), nullable=True)
 
-    performances = relationship("Performance", back_populates="festival")
+    Performances = relationship("Performance", back_populates="Festival")
 
 class RockBand(Base):
-    __tablename__ = "rockbands"
+    __tablename__ = "RockBands"
     
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
-    year_founded = Column(Integer, nullable=True)
-    genre = Column(String(50), nullable=True)
-    producer = Column(String(100), nullable=True)
-    members = Column(String(250), nullable=True)
+    BandID = Column(Integer, primary_key=True, index=True)
+    Name = Column(String(100), nullable=False)
+    YearFounded = Column(Integer, nullable=True)
+    Genre = Column(String(50), nullable=True)
+    Producer = Column(String(100), nullable=True)
+    Members = Column(String(250), nullable=True)
 
-    performances = relationship("Performance", back_populates="rockband")
+    Performances = relationship("Performance", back_populates="RockBand")
 
 class Performance(Base):
-    __tablename__ = "performances"
+    __tablename__ = "Performances"
     
-    id = Column(Integer, primary_key=True, index=True)
-    festival_id = Column(Integer, ForeignKey("festivals.id"), nullable=False)
-    band_id = Column(Integer, ForeignKey("rockbands.id"), nullable=False)
-    performance_type = Column(String(100), nullable=True)
-    number = Column(Integer, nullable=True)
-    duration = Column(Float, nullable=True)
+    PerformanceID = Column(Integer, primary_key=True, index=True)
+    FestivalID = Column(Integer, ForeignKey("Festivals.FestivalID"), nullable=False)
+    BandID = Column(Integer, ForeignKey("RockBands.BandID"), nullable=False)
+    PerformanceType = Column(String(100), nullable=True)
+    Number = Column(Integer, nullable=True)
+    Duration = Column(Float, nullable=True)
 
-    festival = relationship("Festival", back_populates="performances")
-    rockband = relationship("RockBand", back_populates="performances")
+    Festival = relationship("Festival", back_populates="Performances")
+    RockBand = relationship("RockBand", back_populates="Performances")

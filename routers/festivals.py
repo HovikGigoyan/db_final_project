@@ -4,6 +4,7 @@ from database import SessionLocal
 from typing import List
 import sqlalchemy as sa
 import models, schemas
+import random
 
 router = APIRouter(
     prefix="/festivals",
@@ -20,7 +21,13 @@ def get_db():
 
 @router.post("/", response_model=schemas.Festival)
 def create_festival(festival: schemas.FestivalCreate, db: Session = Depends(get_db)):
-    new_festival = models.Festival(**festival.dict())
+    festival_dict = festival.dict()
+    festival_dict["details"] = {
+        "type": "music", 
+        "rating": random.randint(1, 5), 
+        "comments": ["Great event!", "Loved it!"]
+    }
+    new_festival = models.Festival(**festival_dict)
     db.add(new_festival)
     db.commit()
     db.refresh(new_festival)
@@ -28,14 +35,17 @@ def create_festival(festival: schemas.FestivalCreate, db: Session = Depends(get_
 
 
 @router.get("/", response_model=List[schemas.Festival])
-def read_festivals(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    festivals = db.query(models.Festival).offset(skip).limit(limit).all()
+def read_festivals(skip: int = 0, limit: int = 10, sort_by: str = "Name", db: Session = Depends(get_db)):
+    valid_sort_columns = ["Name", "Location", "Date", "Organizer", "Format"]
+    if sort_by not in valid_sort_columns:
+        raise HTTPException(status_code=400, detail="Invalid sort field.")
+    festivals = db.query(models.Festival).order_by(getattr(models.Festival, sort_by)).offset(skip).limit(limit).all()
     return festivals
 
 
 @router.get("/{festival_id}", response_model=schemas.Festival)
 def read_festival(festival_id: int, db: Session = Depends(get_db)):
-    festival = db.query(models.Festival).filter(models.Festival.id == festival_id).first()
+    festival = db.query(models.Festival).filter(models.Festival.FestivalID == festival_id).first()
     if not festival:
         raise HTTPException(status_code=404, detail="Festival not found")
     return festival
@@ -43,7 +53,7 @@ def read_festival(festival_id: int, db: Session = Depends(get_db)):
 
 @router.put("/{festival_id}", response_model=schemas.Festival)
 def update_festival(festival_id: int, festival: schemas.FestivalCreate, db: Session = Depends(get_db)):
-    db_festival = db.query(models.Festival).filter(models.Festival.id == festival_id).first()
+    db_festival = db.query(models.Festival).filter(models.Festival.FestivalID == festival_id).first()
     if not db_festival:
         raise HTTPException(status_code=404, detail="Festival not found")
     for key, value in festival.dict().items():
@@ -55,7 +65,7 @@ def update_festival(festival_id: int, festival: schemas.FestivalCreate, db: Sess
 
 @router.delete("/{festival_id}")
 def delete_festival(festival_id: int, db: Session = Depends(get_db)):
-    db_festival = db.query(models.Festival).filter(models.Festival.id == festival_id).first()
+    db_festival = db.query(models.Festival).filter(models.Festival.FestivalID == festival_id).first()
     if not db_festival:
         raise HTTPException(status_code=404, detail="Festival not found")
     db.delete(db_festival)
@@ -66,8 +76,8 @@ def delete_festival(festival_id: int, db: Session = Depends(get_db)):
 @router.get("/filter", response_model=List[schemas.Festival])
 def filter_festivals(name: str, location: str, db: Session = Depends(get_db)):
     festivals = db.query(models.Festival).filter(
-        models.Festival.name == name,
-        models.Festival.location == location
+        models.Festival.Name == name,
+        models.Festival.Location == location
     ).all()
     return festivals
 
@@ -87,14 +97,18 @@ def update_festival_format(location: str, new_format: str, db: Session = Depends
 def group_by_format(db: Session = Depends(get_db)):
     results = db.query(
         models.Festival.format,
-        sa.func.count(models.Festival.id).label("count")
+        sa.func.count(models.Festival.FestivalID).label("count")
     ).group_by(models.Festival.format).all()
     return results
 
-@router.get("/", response_model=List[schemas.Festival])
-def read_festivals(skip: int = 0, limit: int = 10, sort_by: str = "name", db: Session = Depends(get_db)):
-    valid_sort_columns = ["name", "location", "date", "organizer", "format"]
-    if sort_by not in valid_sort_columns:
-        raise HTTPException(status_code=400, detail="Invalid sort field.")
-    festivals = db.query(models.Festival).order_by(getattr(models.Festival, sort_by)).offset(skip).limit(limit).all()
-    return festivals
+
+@router.get("/search/")
+def search_festivals(query: str, db: Session = Depends(get_db)):
+    results = db.query(models.Festival).filter(
+        sa.func.jsonb_path_exists(
+            models.Festival.details, f"$[*] ? (@.comments like_regex '.*{query}.*' flag 'i')"
+        )
+    ).all()
+    if not results:
+        raise HTTPException(status_code=404, detail="No festivals found matching query")
+    return results
